@@ -2,6 +2,7 @@ package pl.msmaciek.playerdatalib.property.impl;
 
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
@@ -10,6 +11,7 @@ import pl.msmaciek.playerdatalib.property.PropertyRegistry;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @SuppressWarnings("unchecked")
 public final class CoreProperties {
@@ -72,7 +74,14 @@ public final class CoreProperties {
     );
 
     public static final ProfileProperty<Boolean> FLYING = new SimpleProperty<>(
-            "flying", Boolean.class, Player::isFlying, Player::setFlying
+            "flying", Boolean.class, Player::isFlying,
+            (player, flying) -> {
+                // Ensure allow flight is enabled before setting flying to true
+                if (flying && !player.getAllowFlight()) {
+                    player.setAllowFlight(true);
+                }
+                player.setFlying(flying);
+            }
     );
 
     public static final ProfileProperty<Boolean> GRAVITY = new SimpleProperty<>(
@@ -86,6 +95,29 @@ public final class CoreProperties {
     // State
     public static final ProfileProperty<GameMode> GAMEMODE = new SimpleProperty<>(
             "gamemode", GameMode.class, Player::getGameMode, Player::setGameMode
+    );
+
+    public static final ProfileProperty<UUID> SPECTATOR_TARGET = new SimpleProperty<>(
+            "spectator_target", UUID.class,
+            player -> {
+                Entity target = player.getSpectatorTarget();
+                return target != null ? target.getUniqueId() : null;
+            },
+            (player, targetUuid) -> {
+                if (targetUuid == null) {
+                    player.setSpectatorTarget(null);
+                    return;
+                }
+                // Only set spectator target if player is in spectator mode
+                if (player.getGameMode() != GameMode.SPECTATOR) {
+                    player.setGameMode(GameMode.SPECTATOR);
+                }
+                Entity target = player.getServer().getEntity(targetUuid);
+                // Only set if target entity exists and is alive (not dead)
+                if (target != null && !target.isDead()) {
+                    player.setSpectatorTarget(target);
+                }
+            }
     );
 
     public static final ProfileProperty<Boolean> GLOWING = new SimpleProperty<>(
@@ -223,6 +255,7 @@ public final class CoreProperties {
         registry.register(GRAVITY);
         registry.register(VELOCITY);
         registry.register(GAMEMODE);
+        registry.register(SPECTATOR_TARGET);
         registry.register(GLOWING);
         registry.register(VISUAL_FIRE);
         registry.register(COLLIDABLE);
