@@ -105,7 +105,10 @@ public final class CoreProperties {
             },
             (player, targetUuid) -> {
                 if (targetUuid == null) {
-                    player.setSpectatorTarget(null);
+                    // If currently spectating, clear the target first while still in spectator mode
+                    if (player.getGameMode() == GameMode.SPECTATOR && player.getSpectatorTarget() != null) {
+                        player.setSpectatorTarget(null);
+                    }
                     return;
                 }
                 // Only set spectator target if player is in spectator mode
@@ -160,7 +163,14 @@ public final class CoreProperties {
                 }
                 return slots;
             },
-            (player, slots) -> slots.forEach((slot, item) -> player.getInventory().setItem(slot, item))
+            (player, slots) -> {
+                // Clear inventory first (slots 0-35)
+                for (int i = 0; i < 36; i++) {
+                    player.getInventory().setItem(i, null);
+                }
+                // Then set items from the profile
+                slots.forEach((slot, item) -> player.getInventory().setItem(slot, item));
+            }
     );
 
     public static final ProfileProperty<Map<Integer, ItemStack>> ARMOR_CONTENTS = new SimpleProperty<>(
@@ -174,14 +184,19 @@ public final class CoreProperties {
                 }
                 return slots;
             },
-            (player, slots) -> slots.forEach((slot, item) -> {
-                switch (slot) {
-                    case 0 -> player.getInventory().setBoots(item);
-                    case 1 -> player.getInventory().setLeggings(item);
-                    case 2 -> player.getInventory().setChestplate(item);
-                    case 3 -> player.getInventory().setHelmet(item);
-                }
-            })
+            (player, slots) -> {
+                // Clear armor first
+                player.getInventory().setArmorContents(new ItemStack[4]);
+                // Then set armor from the profile
+                slots.forEach((slot, item) -> {
+                    switch (slot) {
+                        case 0 -> player.getInventory().setBoots(item);
+                        case 1 -> player.getInventory().setLeggings(item);
+                        case 2 -> player.getInventory().setChestplate(item);
+                        case 3 -> player.getInventory().setHelmet(item);
+                    }
+                });
+            }
     );
 
     public static final ProfileProperty<ItemStack> OFFHAND = new SimpleProperty<>(

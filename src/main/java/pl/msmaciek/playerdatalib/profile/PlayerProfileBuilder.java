@@ -11,11 +11,22 @@ public final class PlayerProfileBuilder {
 
     private final Map<String, Object> values = new HashMap<>();
 
+    /**
+     * Sentinel value to represent explicit null in the profile.
+     * This allows distinguishing between "not set" and "set to null".
+     */
+    public static final Object NULL_VALUE = new Object() {
+        @Override
+        public String toString() {
+            return "NULL_VALUE";
+        }
+    };
+
     PlayerProfileBuilder() {}
 
     public <T> PlayerProfileBuilder set(@NotNull ProfileProperty<T> property, @Nullable T value) {
         if (value == null) {
-            values.remove(property.getId());
+            values.put(property.getId(), NULL_VALUE);
         } else {
             values.put(property.getId(), value);
         }
@@ -24,7 +35,7 @@ public final class PlayerProfileBuilder {
 
     public PlayerProfileBuilder set(@NotNull String propertyId, @Nullable Object value) {
         if (value == null) {
-            values.remove(propertyId);
+            values.put(propertyId, NULL_VALUE);
         } else {
             values.put(propertyId, value);
         }

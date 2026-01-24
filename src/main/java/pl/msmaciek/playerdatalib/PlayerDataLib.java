@@ -8,6 +8,8 @@ import pl.msmaciek.playerdatalib.property.ProfileProperty;
 import pl.msmaciek.playerdatalib.property.PropertyRegistry;
 import pl.msmaciek.playerdatalib.property.impl.CoreProperties;
 
+import java.util.function.Predicate;
+
 public final class PlayerDataLib {
 
     private static boolean initialized = false;
@@ -51,5 +53,20 @@ public final class PlayerDataLib {
 
     public static void resetToVanilla(@NotNull Player player) {
         apply(player, DefaultProfiles.vanillaDefaults());
+    }
+
+    public static void applyDiff(@NotNull Player player, @NotNull PlayerProfile profile) {
+        init();
+        profile.applyDiff(player);
+    }
+
+    public static void applyToMatching(@NotNull PlayerProfile profile, @NotNull Predicate<Player> matcher) {
+        init();
+        profile.applyToMatching(matcher);
+    }
+
+    public static void applyToAll(@NotNull PlayerProfile profile) {
+        init();
+        profile.applyToAll();
     }
 }
